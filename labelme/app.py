@@ -80,6 +80,7 @@ class MainWindow(QtWidgets.QMainWindow):
         Shape.vertex_fill_color = QtGui.QColor(
             *self._config["shape"]["vertex_fill_color"]
         )
+        Shape.show_labels = self._config["shape"]["show_labels"]
         Shape.hvertex_fill_color = QtGui.QColor(
             *self._config["shape"]["hvertex_fill_color"]
         )
@@ -731,6 +732,17 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.tools = self.toolbar("Tools")
         # Menu buttons on Left
+        defaultCreateMode = createMode
+        if self._config["default_create_mode"] == "rectangle":
+            defaultCreateMode = createRectangleMode
+        elif self._config["default_create_mode"] == "circle":
+            defaultCreateMode = createCircleMode
+        elif self._config["default_create_mode"] == "line":
+            defaultCreateMode = createLineMode
+        elif self._config["default_create_mode"] == "point":
+            defaultCreateMode = createPointMode
+        elif self._config["default_create_mode"] == "linestrip":
+            defaultCreateMode = createLineStripMode
         self.actions.tool = (
             open_,
             opendir,
@@ -739,7 +751,7 @@ class MainWindow(QtWidgets.QMainWindow):
             save,
             deleteFile,
             None,
-            createMode,
+            defaultCreateMode,
             editMode,
             duplicate,
             copy,

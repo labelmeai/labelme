@@ -43,7 +43,7 @@ from labelme.widgets import ZoomWidget
 
 
 LABEL_COLORMAP = imgviz.label_colormap()
-
+GROUP_ID_COLORMAP = utils.shape.generate_random_colors(100, bright=True)
 
 class MainWindow(QtWidgets.QMainWindow):
 
@@ -607,6 +607,16 @@ class MainWindow(QtWidgets.QMainWindow):
         if self._config["canvas"]["fill_drawing"]:
             fill_drawing.trigger()
 
+        highlight_group_id = action(
+            self.tr("Highlight group_id"),
+            self.setGroupIdSort,
+            None,
+            "color",
+            self.tr("Highlight shapes with the same group_id"),
+            checkable=True,
+            enabled=True
+        )
+
         # Lavel list context menu.
         labelMenu = QtWidgets.QMenu()
         utils.addActions(labelMenu, (edit, delete))
@@ -703,6 +713,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 brightnessContrast,
             ),
             onShapesPresent=(saveAs, hideAll, showAll),
+            highlight_group_id=highlight_group_id
         )
 
         self.canvas.vertexSelected.connect(self.actions.removePoint.setEnabled)
@@ -745,6 +756,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.file_dock.toggleViewAction(),
                 None,
                 fill_drawing,
+                None,
+                highlight_group_id,
                 None,
                 hideAll,
                 showAll,
@@ -1200,7 +1213,19 @@ class MainWindow(QtWidgets.QMainWindow):
         )
 
     def _update_shape_color(self, shape):
-        r, g, b = self._get_rgb_by_label(shape.label)
+        if self.canvas.groupIdColorObjSort:
+            if shape.group_id is not None:
+                group_id_line_color = self._config["group_id_line_color"]
+                if group_id_line_color is not None:
+                    r, g, b = map(int,
+                                  group_id_line_color[shape.group_id
+                                                      % len(group_id_line_color)].split(','))
+                else:
+                    r, g, b = GROUP_ID_COLORMAP[shape.group_id]
+            else:
+                r, g, b = (255, 255, 255)
+        else:
+            r, g, b = self._get_rgb_by_label(shape.label)
         shape.line_color = QtGui.QColor(r, g, b)
         shape.vertex_fill_color = QtGui.QColor(r, g, b)
         shape.hvertex_fill_color = QtGui.QColor(255, 255, 255)
@@ -2127,3 +2152,13 @@ class MainWindow(QtWidgets.QMainWindow):
                     images.append(relativePath)
         images = natsort.os_sorted(images)
         return images
+
+    def setGroupIdSort(self):
+        if not self.canvas.groupIdColorObjSort:
+            self.canvas.groupIdColorObjSort = True
+            self.actions.highlight_group_id.setChecked(True)
+            self.loadFile(self.filename)
+        else:
+            self.canvas.groupIdColorObjSort = False
+            self.actions.highlight_group_id.setChecked(False)
+            self.loadFile(self.filename)

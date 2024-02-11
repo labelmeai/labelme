@@ -597,6 +597,15 @@ class MainWindow(QtWidgets.QMainWindow):
             enabled=False,
         )
 
+        multi_edit = action(
+            self.tr("&Multi Edit"),
+            self.multiEditLabel,
+            shortcuts["multi_edit_labels"],
+            "multi_edit",
+            self.tr("Modify the label of the selected polygons"),
+            enabled=False,
+        )
+
         fill_drawing = action(
             self.tr("Fill Drawing Polygon"),
             self.canvas.setFillDrawing,
@@ -611,7 +620,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Lavel list context menu.
         labelMenu = QtWidgets.QMenu()
-        utils.addActions(labelMenu, (edit, delete))
+        utils.addActions(labelMenu, (edit, multi_edit, delete))
         self.labelList.setContextMenuPolicy(Qt.CustomContextMenu)
         self.labelList.customContextMenuRequested.connect(self.popLabelListMenu)
 
@@ -628,6 +637,7 @@ class MainWindow(QtWidgets.QMainWindow):
             toggleKeepPrevMode=toggle_keep_prev_mode,
             delete=delete,
             edit=edit,
+            multi_edit=multi_edit,
             duplicate=duplicate,
             copy=copy,
             paste=paste,
@@ -1107,6 +1117,9 @@ class MainWindow(QtWidgets.QMainWindow):
         )
         if text is None:
             return
+        return self._updateLabel(item, shape, text, flags, group_id, description)
+
+    def _updateLabel(self, item, shape, text, flags, group_id, description):
         if not self.validateLabel(text):
             self.errorMessage(
                 self.tr("Invalid label"),
@@ -1136,6 +1149,21 @@ class MainWindow(QtWidgets.QMainWindow):
             rgb = self._get_rgb_by_label(shape.label)
             self.uniqLabelList.setItemLabel(item, shape.label, rgb)
 
+    def multiEditLabel(self):
+        items = self.labelList.selectedItems()
+        if not items:
+            return
+        shape = items[0].shape()
+        text, flags, group_id, description = self.labelDialog.popUp(
+            text=shape.label,
+            flags=shape.flags,
+            group_id=shape.group_id,
+            description=shape.description,
+        )
+        if text is None:
+            return
+        for item in items:
+            self._updateLabel(item, item.shape(), text, flags, group_id, description)
     def fileSearchChanged(self):
         self.importDirImages(
             self.lastOpenDir,
@@ -1176,6 +1204,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.actions.duplicate.setEnabled(n_selected)
         self.actions.copy.setEnabled(n_selected)
         self.actions.edit.setEnabled(n_selected == 1)
+        self.actions.multi_edit.setEnabled(n_selected > 1)
 
     def addLabel(self, shape):
         if shape.group_id is None:

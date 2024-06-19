@@ -331,8 +331,8 @@ class Canvas(QtWidgets.QWidget):
         for shape in reversed([s for s in self.shapes if self.isVisible(s)]):
             # Look for a nearby vertex to highlight. If that fails,
             # check if we happen to be inside a shape.
-            index = shape.nearestVertex(pos, self.epsilon / self.scale)
-            index_edge = shape.nearestEdge(pos, self.epsilon / self.scale)
+            index = shape.nearestVertex(pos, self.epsilon)
+            index_edge = shape.nearestEdge(pos, self.epsilon)
             if index is not None:
                 if self.selectedVertex():
                     self.hShape.highlightClear()
@@ -439,9 +439,11 @@ class Canvas(QtWidgets.QWidget):
                 elif not self.outOfPixmap(pos):
                     # Create new shape.
                     self.current = Shape(
-                        shape_type="points"
-                        if self.createMode in ["ai_polygon", "ai_mask"]
-                        else self.createMode
+                        shape_type=(
+                            "points"
+                            if self.createMode in ["ai_polygon", "ai_mask"]
+                            else self.createMode
+                        )
                     )
                     self.current.addPoint(pos, label=0 if is_shift_pressed else 1)
                     if self.createMode == "point":
@@ -695,6 +697,8 @@ class Canvas(QtWidgets.QWidget):
 
         p.drawPixmap(0, 0, self.pixmap)
 
+        p.scale(1 / self.scale, 1 / self.scale)
+
         # draw crosshair
         if (
             self._crosshair[self._createMode]
@@ -705,14 +709,14 @@ class Canvas(QtWidgets.QWidget):
             p.setPen(QtGui.QColor(0, 0, 0))
             p.drawLine(
                 0,
-                int(self.prevMovePoint.y()),
+                int(self.prevMovePoint.y() * self.scale),
                 self.width() - 1,
-                int(self.prevMovePoint.y()),
+                int(self.prevMovePoint.y() * self.scale),
             )
             p.drawLine(
-                int(self.prevMovePoint.x()),
+                int(self.prevMovePoint.x() * self.scale),
                 0,
-                int(self.prevMovePoint.x()),
+                int(self.prevMovePoint.x() * self.scale),
                 self.height() - 1,
             )
 
@@ -933,9 +937,11 @@ class Canvas(QtWidgets.QWidget):
                 else:
                     self.scrollRequest.emit(
                         ev.delta(),
-                        QtCore.Qt.Horizontal
-                        if (QtCore.Qt.ShiftModifier == int(mods))
-                        else QtCore.Qt.Vertical,
+                        (
+                            QtCore.Qt.Horizontal
+                            if (QtCore.Qt.ShiftModifier == int(mods))
+                            else QtCore.Qt.Vertical
+                        ),
                     )
             else:
                 self.scrollRequest.emit(ev.delta(), QtCore.Qt.Horizontal)

@@ -872,6 +872,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.importDirImages(filename, load=False)
         else:
             self.filename = filename
+            self.filenames = [filename]
 
         if config["file_search"]:
             self.fileSearch.setText(config["file_search"])
@@ -962,7 +963,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.actions.save.setEnabled(True)
         title = __appname__
         if self.filename is not None:
-            title = "{} - {}*".format(title, self.filename)
+            filename_index = self.filenames.index(self.filename)
+            title = "{} - {}* ({}/{})".format(
+                title, self.filename, filename_index + 1, len(self.filenames)
+            )
         self.setWindowTitle(title)
 
     def setClean(self):
@@ -978,7 +982,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.actions.createAiMaskMode.setEnabled(True)
         title = __appname__
         if self.filename is not None:
-            title = "{} - {}".format(title, self.filename)
+            filename_index = self.filenames.index(self.filename)
+            title = "{} - {} ({}/{})".format(
+                title, self.filename, filename_index + 1, len(self.filenames)
+            )
         self.setWindowTitle(title)
 
         if self.hasLabelFile():
@@ -1930,6 +1937,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if fileDialog.exec_():
             fileName = fileDialog.selectedFiles()[0]
             if fileName:
+                self.filenames = [str(fileName)]
                 self.loadFile(fileName)
 
     def changeOutputDirDialog(self, _value=False):
@@ -2173,7 +2181,9 @@ class MainWindow(QtWidgets.QMainWindow):
         ]
 
         self.filename = None
+        self.filenames = []
         for file in imageFiles:
+            self.filenames.append(file)
             if file in self.imageList or not file.lower().endswith(tuple(extensions)):
                 continue
             label_file = osp.splitext(file)[0] + ".json"
@@ -2223,6 +2233,7 @@ class MainWindow(QtWidgets.QMainWindow):
             else:
                 item.setCheckState(Qt.Unchecked)
             self.fileListWidget.addItem(item)
+        self.filenames = filenames
         self.openNextImg(load=load)
 
     def scanAllImages(self, folderPath):

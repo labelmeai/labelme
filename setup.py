@@ -33,6 +33,7 @@ def get_install_requires():
         "qtpy!=1.11.2",
         "scikit-image",
         "termcolor",
+        "yapsygui"
     ]
 
     # Find python binding for qt with priority:

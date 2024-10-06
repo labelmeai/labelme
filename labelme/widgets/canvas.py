@@ -1,4 +1,5 @@
 import imgviz
+import platform
 from qtpy import QtCore
 from qtpy import QtGui
 from qtpy import QtWidgets
@@ -908,6 +909,10 @@ class Canvas(QtWidgets.QWidget):
                 # with Ctrl/Command key
                 # zoom
                 self.zoomRequest.emit(delta.y(), ev.pos())
+            elif QtCore.Qt.ShiftModifier == int(mods) and platform.system() != "Darwin":
+                # side scroll
+                self.scrollRequest.emit(delta.y(), QtCore.Qt.Horizontal)
+                self.scrollRequest.emit(delta.x(), QtCore.Qt.Vertical)
             else:
                 # scroll
                 self.scrollRequest.emit(delta.x(), QtCore.Qt.Horizontal)
